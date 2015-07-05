@@ -5,15 +5,15 @@
 %%% @end
 %%% Created : 04. Jul 2015 23:23
 %%%-------------------------------------------------------------------
--module(docking_station).
+-module(erlangville_dock_station).
 %% API
--export([start_link/3, get_cycle/1, release_cycle/2, get_info/1]).
+-export([start_link/2, get_cycle/1, release_cycle/2, get_info/1]).
 -include("dock.hrl").
 
 
 %% @doc start docking station.
--spec start_link(DockRef :: term(), Total :: non_neg_integer(), Occupied :: non_neg_integer()) -> state.
-start_link(DockRef, Total, Occupied) ->
+-spec start_link(Total :: non_neg_integer(), Occupied :: non_neg_integer()) -> state.
+start_link(Total, Occupied) ->
   #state{total = Total, occupied = Occupied, free = (Total - Occupied), bikeRefs = get_bike_refs(Occupied)}.
 
 %% @doc get cycle from specified docking station
@@ -32,15 +32,15 @@ get_cycle(State = #state{occupied = Occupied, free = Free, bikeRefs = BikeRefs})
 -spec release_cycle(BikeRef :: string(), State :: state) -> full | state.
 release_cycle(BikeRef, State = #state{occupied = Occupied, free = Free, bikeRefs = BikeRefs}) ->
   if Free =< 0 ->
-      full;
-     Free > 0 ->
-       NewState = State#state{occupied = Occupied + 1, free = Free - 1, bikeRefs = [BikeRef | BikeRefs]},
-       NewState
+    full;
+    Free > 0 ->
+      NewState = State#state{occupied = Occupied + 1, free = Free - 1, bikeRefs = [BikeRef | BikeRefs]},
+      NewState
   end.
 
 
 %% @doc get info of specific docing station
- -spec get_info(State::state) -> {info, state}.
+-spec get_info(State :: state) -> {info, state}.
 get_info(State) ->
   {info
     , {{total, State#state.total}

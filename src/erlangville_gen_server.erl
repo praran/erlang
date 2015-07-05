@@ -1,12 +1,11 @@
 %%%-------------------------------------------------------------------
-%%% @author pradeep
 %%% @copyright (C) 2015, <COMPANY>
 %%% @doc
 %%%
 %%% @end
 %%% Created : 04. Jul 2015 21:37
 %%%-------------------------------------------------------------------
--module(docking_station_serv).
+-module(erlangville_gen_server).
 -define(NODE, 'a@localhost').
 -define(NAME, ?MODULE).
 -define(SERVER, {?NAME, ?NODE}).
@@ -21,7 +20,7 @@
 %% @doc start docking station.
 -spec start_link(DockRef :: term(), Total :: non_neg_integer(), Occupied :: non_neg_integer()) -> ok.
 start_link(DockRef, Total, Occupied) ->
-  gen_server:start_link(?MODULE, {DockRef, Total, Occupied}, []).
+  gen_server:start_link({local, DockRef}, ?MODULE, {Total, Occupied}, []).
 
 %% @doc get cycle from specified docking station
 %% returns {ok, BikeReference} or {error, empty}.
@@ -50,8 +49,10 @@ get_info(DockRef) ->
 %% generic server behaviour
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-init({DockRef, Total, Occupied}) ->
-  {ok, docking_station:start_link(DockRef, Total, Occupied)}.
+init({Total, Occupied}) ->
+  %% trapping exits
+  process_flag(trap_exit, true),
+  {ok, erlangville_dock_station:start_link(Total, Occupied)}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Synchronous Calls
@@ -59,16 +60,16 @@ init({DockRef, Total, Occupied}) ->
 handle_call(Msg, _From, S) ->
   case Msg of
     get_cycle ->
-      case docking_station:get_cycle(S) of
-        empty      -> {reply, {error, empty}, S};
+      case erlangville_dock_station:get_cycle(S) of
+        empty -> {reply, {error, empty}, S};
         {H, State} -> {reply, {ok, H}, State}
       end;
     info ->
-      {reply, docking_station:get_info(S), S};
+      {reply, erlangville_dock_station:get_info(S), S};
     {release_cycle, BikeRef} ->
-      case docking_station:release_cycle(BikeRef, S) of
-        full       -> {reply, {error, full}, S};
-        NewState   -> {reply, {ok}, NewState}
+      case erlangville_dock_station:release_cycle(BikeRef, S) of
+        full -> {reply, {error, full}, S};
+        NewState -> {reply, {ok}, NewState}
       end
   end.
 
