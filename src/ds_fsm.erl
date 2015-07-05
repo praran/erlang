@@ -20,7 +20,7 @@
 %% @doc start docking station.
 -spec start_link(DockRef :: term(), Total :: non_neg_integer(), Occupied :: non_neg_integer()) -> ok.
 start_link(DockRef, Total, Occupied) ->
-  gen_fsm:start_link({local, DockRef}, ?MODULE, {Total, Occupied}, []).
+  gen_fsm:start_link({local, DockRef}, ?MODULE, {DockRef, Total, Occupied}, []).
 
 %% @doc get cycle from specified docking station
 %% returns {ok, BikeReference} or {error, empty}.
@@ -49,11 +49,15 @@ get_info(DockRef) ->
 
 %% @doc generic init method
 -spec init({non_neg_integer(), non_neg_integer()}) -> {ok, term(), term()}.
-init({Total, Occupied}) ->
+init({DockRef,Total, Occupied}) ->
   %% trapping exits
   process_flag(trap_exit, true),
-  NewState =  ds_behaviour:start_link(Total, Occupied),
-  {ok, ds_behaviour:get_state(NewState), NewState}.
+  case ds_states_store:get_global_dock_state(DockRef) of
+    []                 -> NewState =  docking_station:create_dock_state(Total, Occupied),
+                          {ok, docking_station:get_fsm_state(NewState), NewState};
+    [{DockRef, State}] -> {ok, docking_station:get_fsm_state(State), State}
+  end.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Globlal synchronous Calls
@@ -62,7 +66,7 @@ init({Total, Occupied}) ->
 %% @doc global events get info should be able to return
 %%      info irrespective of the state the docking FSM is in.
 handle_sync_event(info, _From, StateName, S) ->
-  {reply, ds_behaviour:get_info(S), StateName, S}.
+  {reply, docking_station:get_info(S), StateName, S}.
 
 %% @doc handle global messages currently unsupported
 handle_info(Info, StateName, S) ->
@@ -85,8 +89,10 @@ handle_event(_Msg, StateName, S) ->
 %%       get_cycle should be able to return a cycle and switch state to
 %%       available
 full(get_cycle, _From, S) ->
-  {H, State} = ds_behaviour:get_cycle(S),
-  {reply, {ok, H}, available, State};
+  {H, NewState} = docking_station:get_cycle(S),
+  %% State change:: updating the state in global ets table to maintain state on failure
+  ds_states_store:store_global_dock_state(docking_station:get_name_of_pid(self()),NewState),
+  {reply, {ok, H}, available, NewState};
 full({release_cycle, _BikeRef}, _From, S) ->
   {reply, {error, full}, full, S}.
 
@@ -96,18 +102,25 @@ full({release_cycle, _BikeRef}, _From, S) ->
 empty(get_cycle, _From, S) ->
   {reply, {error, empty}, empty, S};
 empty({release_cycle, BikeRef}, _From, S) ->
-  {reply, {ok}, available, ds_behaviour:release_cycle(BikeRef, S)}.
+  NewState = docking_station:release_cycle(BikeRef, S),
+  %% State change:: updating the state in global ets table to maintain state on failure
+  ds_states_store:store_global_dock_state(docking_station:get_name_of_pid(self()),NewState),
+  {reply, {ok}, available, NewState}.
 
 %% @doc  when in available state get cycle should be able to return cycle
 %%       and if it becomes empty should switch state to empty else stay in available
 %%       when release cycle should be able to release cycle and if full
 %%       then should switch to full state else stay in available
 available(get_cycle, _From, S) ->
-  {H, NS} = ds_behaviour:get_cycle(S),
-  {reply, {ok, H},ds_behaviour:get_state(NS), NS};
+  {H, NewState} = docking_station:get_cycle(S),
+  %% State change:: updating the state in global ets table to maintain state on failure
+  ds_states_store:store_global_dock_state(docking_station:get_name_of_pid(self()),NewState),
+  {reply, {ok, H}, docking_station:get_fsm_state(NewState), NewState};
 available({release_cycle, BikeRef}, _from, S) ->
-  NS = ds_behaviour:release_cycle(BikeRef, S),
-  {reply, {ok},ds_behaviour:get_state(NS), NS}.
+  NewState = docking_station:release_cycle(BikeRef, S),
+  %% State change:: updating the state in global ets table to maintain state on failure
+  ds_states_store:store_global_dock_state(docking_station:get_name_of_pid(self()),NewState),
+  {reply, {ok}, docking_station:get_fsm_state(NewState), NewState}.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

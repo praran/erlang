@@ -20,7 +20,7 @@
 %% @doc start docking station.
 -spec start_link(DockRef :: term(), Total :: non_neg_integer(), Occupied :: non_neg_integer()) -> ok.
 start_link(DockRef, Total, Occupied) ->
-  gen_server:start_link({local, DockRef}, ?MODULE, {Total, Occupied}, []).
+  gen_server:start_link({local, DockRef}, ?MODULE, {DockRef,Total, Occupied}, []).
 
 %% @doc get cycle from specified docking station
 %% returns {ok, BikeReference} or {error, empty}.
@@ -49,10 +49,14 @@ get_info(DockRef) ->
 %% generic server behaviour
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-init({Total, Occupied}) ->
+init({DockRef, Total, Occupied}) ->
   %% trapping exits
   process_flag(trap_exit, true),
-  {ok, ds_behaviour:start_link(Total, Occupied)}.
+  case ds_states_store:get_global_dock_state(DockRef) of
+    []                 -> {ok, docking_station:start_link(Total, Occupied)};
+    [{DockRef, State}] -> {ok, State}
+  end.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Synchronous Calls
@@ -60,18 +64,25 @@ init({Total, Occupied}) ->
 handle_call(Msg, _From, S) ->
   case Msg of
     get_cycle ->
-      case ds_behaviour:get_cycle(S) of
+      case docking_station:get_cycle(S) of
         empty -> {reply, {error, empty}, S};
-        {H, State} -> {reply, {ok, H}, State}
+        {H, NewState} ->
+          %% State change:: updating the state in global ets table to maintain state on failure
+          ds_states_store:store_global_dock_state(docking_station:get_name_of_pid(self()),NewState),
+          {reply, {ok, H}, NewState}
       end;
     info ->
-      {reply, ds_behaviour:get_info(S), S};
+      {reply, docking_station:get_info(S), S};
     {release_cycle, BikeRef} ->
-      case ds_behaviour:release_cycle(BikeRef, S) of
+      case docking_station:release_cycle(BikeRef, S) of
         full -> {reply, {error, full}, S};
-        NewState -> {reply, {ok}, NewState}
+        NewState ->
+          %% State change:: updating the state in global ets table to maintain state on failure
+          ds_states_store:store_global_dock_state(docking_station:get_name_of_pid(self()),NewState),
+          {reply, {ok}, NewState}
       end
   end.
+
 
 handle_info(Msg, S) ->
   io:format("Unexpected message: ~p~n", [Msg]),

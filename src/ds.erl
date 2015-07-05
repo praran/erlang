@@ -6,7 +6,6 @@
 %%% Created : 05. Jul 2015 03:52
 %%%-------------------------------------------------------------------
 -module(ds).
--author("pradeep").
 -behaviour(application).
 
 %% API

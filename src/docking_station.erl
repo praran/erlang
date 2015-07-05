@@ -5,10 +5,14 @@
 %%% @end
 %%% Created : 04. Jul 2015 23:23
 %%%-------------------------------------------------------------------
--module(ds_behaviour).
+-module(docking_station).
 %% API
--export([start_link/2, get_cycle/1, release_cycle/2, get_info/1, get_random_string/1, get_state/1]).
+-export([start_link/2, get_cycle/1, release_cycle/2, get_info/1]).
+%% Helper functions
+-export([get_random_string/1, get_name_of_pid/1, get_fsm_state/1, create_dock_state/2]).
+
 -include("dock.hrl").
+
 
 
 %% @doc start docking station.
@@ -50,12 +54,18 @@ get_info(State) ->
   }.
 
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Helper Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% @doc helper to create state from Total and Occupied.
+-spec create_dock_state(Total :: non_neg_integer(), Occupied :: non_neg_integer()) -> state.
+create_dock_state(Total, Occupied) ->
+  #state{total = Total, occupied = Occupied, free = (Total - Occupied), bikeRefs = get_bike_refs(Occupied)}.
+
 %% @doc gets the state based on  the state
-get_state(_S =#state{total = Total, occupied = Occupied}) ->
+get_fsm_state(_S =#state{total = Total, occupied = Occupied}) ->
   if Occupied =:= 0 ->
     empty;
     Total =:= Occupied ->
@@ -80,3 +90,9 @@ get_random_string(Length, AllowedChars) ->
       AllowedChars)]
     ++ Acc
   end, [], lists:seq(1, Length)).
+
+%% @doc get registered name for a given pid
+-spec get_name_of_pid(pid()) -> term().
+get_name_of_pid(Pid) ->
+  {registered_name, Name} = process_info(Pid, registered_name),
+  Name.
