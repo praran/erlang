@@ -6,9 +6,6 @@
 %%% Created : 04. Jul 2015 21:37
 %%%-------------------------------------------------------------------
 -module(ds_server).
--define(NODE, 'a@localhost').
--define(NAME, ?MODULE).
--define(SERVER, {?NAME, ?NODE}).
 %% Generic server behaviour
 -behaviour(gen_server).
 %% API / Client exports
@@ -20,19 +17,19 @@
 %% @doc start docking station.
 -spec start_link(DockRef :: term(), Total :: non_neg_integer(), Occupied :: non_neg_integer()) -> ok.
 start_link(DockRef, Total, Occupied) ->
-  gen_server:start_link({local, DockRef}, ?MODULE, {DockRef,Total, Occupied}, []).
+  gen_server:start_link({global, DockRef}, ?MODULE, {DockRef,Total, Occupied}, []).
 
 %% @doc get cycle from specified docking station
 %% returns {ok, BikeReference} or {error, empty}.
 -spec get_cycle(DockRef :: term()) -> {ok, BikeRef :: term()} | {error, empty}.
 get_cycle(DockRef) ->
-  gen_server:call(DockRef, get_cycle).
+  gen_server:call({global, DockRef}, get_cycle).
 
 
 %% @doc release specific cycle to the specific docking station
 -spec release_cycle(DockRef :: term(), BikeRefs :: list()) -> ok | {error, full}.
 release_cycle(DockRef, BikeRef) ->
-  gen_server:call(DockRef, {release_cycle, BikeRef}).
+  gen_server:call({global, DockRef}, {release_cycle, BikeRef}).
 
 
 %% @doc get info of specific docing station
@@ -42,7 +39,7 @@ release_cycle(DockRef, BikeRef) ->
 %% {bikeRef, BikeRefList::[term()]}
 %% ]}.
 get_info(DockRef) ->
-  gen_server:call(DockRef, info).
+  gen_server:call({global, DockRef}, info).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

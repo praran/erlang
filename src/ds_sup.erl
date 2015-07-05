@@ -21,7 +21,7 @@
 start_link() ->
   %% Create a global table to maintain states of induvidual docking station to retreive the state on crash
   ds_states_store:create_global_state_table(),
-  supervisor:start_link({local, ?SUPERVISOR}, ?MODULE, []).
+  supervisor:start_link({global, dssup}, ?MODULE, []).
 
 %% @doc stop the docking station supervisor
 stop() ->
@@ -39,7 +39,7 @@ start_child(DockRef, Total, Occupied) ->
   ChildSpec = {DockRef,
                {ds_server, start_link, [DockRef, Total, Occupied]},
                 permanent, infinity, worker, [ds_server]},
-  supervisor:start_child(?SUPERVISOR, ChildSpec).
+  supervisor:start_child({global, ?SUPERVISOR}, ChildSpec).
 
 %% @doc stop child with given reference
 -spec stop_child(term()) -> ok.

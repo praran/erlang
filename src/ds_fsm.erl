@@ -20,19 +20,19 @@
 %% @doc start docking station.
 -spec start_link(DockRef :: term(), Total :: non_neg_integer(), Occupied :: non_neg_integer()) -> ok.
 start_link(DockRef, Total, Occupied) ->
-  gen_fsm:start_link({local, DockRef}, ?MODULE, {DockRef, Total, Occupied}, []).
+  gen_fsm:start_link({global , DockRef}, ?MODULE, {DockRef, Total, Occupied}, []).
 
 %% @doc get cycle from specified docking station
 %% returns {ok, BikeReference} or {error, empty}.
 -spec get_cycle(DockRef :: term()) -> {ok, BikeRef :: term()} | {error, empty}.
 get_cycle(DockRef) ->
-  gen_fsm:sync_send_event(DockRef, get_cycle).
+  gen_fsm:sync_send_event({global, DockRef}, get_cycle).
 
 
 %% @doc release specific cycle to the specific docking station
 -spec release_cycle(DockRef :: term(), BikeRefs :: list()) -> ok | {error, full}.
 release_cycle(DockRef, BikeRef) ->
-  gen_fsm:sync_send_event(DockRef, {release_cycle, BikeRef}).
+  gen_fsm:sync_send_event({global, DockRef}, {release_cycle, BikeRef}).
 
 %% @doc get info of specific docing station
 %% get_info(DockRef::term()) -> {ok, [{total, Total::non_neg_integer()},
@@ -41,7 +41,7 @@ release_cycle(DockRef, BikeRef) ->
 %% {bikeRef, BikeRefList::[term()]}
 %% ]}.
 get_info(DockRef) ->
-  gen_fsm:sync_send_all_state_event(DockRef, info).
+  gen_fsm:sync_send_all_state_event({global, DockRef}, info).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% generic fsm behaviour
