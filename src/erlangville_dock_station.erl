@@ -7,7 +7,7 @@
 %%%-------------------------------------------------------------------
 -module(erlangville_dock_station).
 %% API
--export([start_link/2, get_cycle/1, release_cycle/2, get_info/1]).
+-export([start_link/2, get_cycle/1, release_cycle/2, get_info/1,get_random_string/1]).
 -include("dock.hrl").
 
 

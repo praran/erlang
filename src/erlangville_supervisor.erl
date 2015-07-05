@@ -8,7 +8,7 @@
 -module(erlangville_supervisor).
 -behaviour(supervisor).
 %% API
--export([start_link/0, stop/0, init/1, start_docking_station/3, stop_docking_station/1]).
+-export([start_link/0, stop/0, init/1, start_docking_station/3, stop_docking_station/1, start_child/2]).
 -define(MAX_RESTART, 3).
 -define(MAX_TIME, 3600).
 -define(SUPERVISOR, erlangvillesupervisor).
@@ -34,8 +34,8 @@ init([]) ->
 
 start_docking_station(DockRef, Total, Occupied) ->
   ChildSpec = {DockRef,
-    {docking_station_serv, start_link, [DockRef, Total, Occupied]},
-    permanent, infinity, worker, [docking_station_serv]},
+    {erlangville_gen_server, start_link, [DockRef, Total, Occupied]},
+    permanent, infinity, worker, [erlangville_gen_server]},
   supervisor:start_child(?SUPERVISOR, ChildSpec).
 
 
@@ -43,3 +43,11 @@ stop_docking_station(DocRef) ->
   supervisor:terminate_child(?SUPERVISOR, DocRef),
   supervisor:delete_child(?SUPERVISOR, DocRef).
 
+
+start_child(Total, Occupied) ->
+  DockRef =list_to_atom(erlangville_dock_station:get_random_string(20)),
+  ChildSpec = {DockRef,
+    {erlangville_gen_server, start_link, [DockRef, Total, Occupied]},
+    permanent, infinity, worker, [erlangville_gen_server]},
+  supervisor:start_child(?SUPERVISOR, ChildSpec),
+  {ok, DockRef}.
