@@ -5,9 +5,9 @@
 %%% @end
 %%% Created : 04. Jul 2015 23:23
 %%%-------------------------------------------------------------------
--module(erlangville_dock_station).
+-module(ds_behaviour).
 %% API
--export([start_link/2, get_cycle/1, release_cycle/2, get_info/1,get_random_string/1]).
+-export([start_link/2, get_cycle/1, release_cycle/2, get_info/1, get_random_string/1, get_state/1]).
 -include("dock.hrl").
 
 
@@ -53,6 +53,17 @@ get_info(State) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Helper Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% @doc gets the state based on  the state
+get_state(_S =#state{total = Total, occupied = Occupied}) ->
+  if Occupied =:= 0 ->
+    empty;
+    Total =:= Occupied ->
+      full;
+    Total >= Occupied ->
+      available
+  end.
+
 
 %% @doc gets the references for the bikes
 get_bike_refs(Num_of_bikes) -> [get_random_string(16) || _A <- lists:seq(1, Num_of_bikes)].

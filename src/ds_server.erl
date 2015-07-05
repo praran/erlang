@@ -5,7 +5,7 @@
 %%% @end
 %%% Created : 04. Jul 2015 21:37
 %%%-------------------------------------------------------------------
--module(erlangville_gen_server).
+-module(ds_server).
 -define(NODE, 'a@localhost').
 -define(NAME, ?MODULE).
 -define(SERVER, {?NAME, ?NODE}).
@@ -52,7 +52,7 @@ get_info(DockRef) ->
 init({Total, Occupied}) ->
   %% trapping exits
   process_flag(trap_exit, true),
-  {ok, erlangville_dock_station:start_link(Total, Occupied)}.
+  {ok, ds_behaviour:start_link(Total, Occupied)}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Synchronous Calls
@@ -60,14 +60,14 @@ init({Total, Occupied}) ->
 handle_call(Msg, _From, S) ->
   case Msg of
     get_cycle ->
-      case erlangville_dock_station:get_cycle(S) of
+      case ds_behaviour:get_cycle(S) of
         empty -> {reply, {error, empty}, S};
         {H, State} -> {reply, {ok, H}, State}
       end;
     info ->
-      {reply, erlangville_dock_station:get_info(S), S};
+      {reply, ds_behaviour:get_info(S), S};
     {release_cycle, BikeRef} ->
-      case erlangville_dock_station:release_cycle(BikeRef, S) of
+      case ds_behaviour:release_cycle(BikeRef, S) of
         full -> {reply, {error, full}, S};
         NewState -> {reply, {ok}, NewState}
       end
