@@ -10,10 +10,11 @@
 %% process states functions
 -export([create_global_state_table/0, get_global_dock_state/1, store_global_dock_state/2]).
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Store / Retreive Process States  Functions
-%% For now keeping it as serial functions
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% for the sake of simplicity the storing is done
+%% as serial operations
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% @doc creates a new ets table
 -spec create_global_state_table() -> term().

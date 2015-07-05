@@ -13,6 +13,8 @@
 
 %% to start of the application
 start(normal, _Args) ->
+  ds_sup:start_link();
+start({takeover, _OtherNode}, []) ->
   ds_sup:start_link().
 
 %% to stop the application

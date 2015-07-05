@@ -50,7 +50,7 @@ get_info(DockRef) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 init({DockRef, Total, Occupied}) ->
-  %% trapping exits
+  %% trapping exits to know when the parent shuts down
   process_flag(trap_exit, true),
   case ds_states_store:get_global_dock_state(DockRef) of
     []                 -> {ok, docking_station:start_link(Total, Occupied)};
