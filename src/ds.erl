@@ -7,15 +7,22 @@
 %%%-------------------------------------------------------------------
 -module(ds).
 -behaviour(application).
+-include("dock.hrl").
 
 %% API
 -export([start/2, stop/1, start_link/3, get_cycle/1, release_cycle/2, get_info/1]).
 
 %% to start of the application
 start(normal, _Args) ->
-  ds_sup:start_link();
+  Term = ds_sup:start_link(),
+  timer:sleep(1000),
+  start_docks_from_state(),
+  Term;
 start({takeover, _OtherNode}, []) ->
-  ds_sup:start_link().
+  Term = ds_sup:start_link(),
+  timer:sleep(1000),
+  start_docks_from_state(),
+  Term.
 
 %% to stop the application
 stop(_State) ->
@@ -26,7 +33,7 @@ stop(_State) ->
 start_link(DockRef, Total, Occupied) ->
   ds_sup:start_child(DockRef, Total, Occupied).
 
-% @doc get cycle from specified docking station
+%% @doc get cycle from specified docking station
 %% returns {ok, BikeReference} or {error, empty}.
 -spec get_cycle(DockRef :: term()) -> {ok, BikeRef :: term()} | {error, empty}.
 get_cycle(DockRef) ->
@@ -47,3 +54,19 @@ release_cycle(DockRef, BikeRef) ->
 %% ]}.
 get_info(DockRef) ->
   ds_server:get_info(DockRef).
+
+start_docks_from_state() ->
+ lists:foreach(fun(Key) ->
+                   case ds_store:get_state(Key) of
+                     [] -> ok ;
+                     [S=#state{}] -> ds_sup:start_child(S)
+                   end
+               end, ds_store:all_keys()).
+
+
+
+%% start_dock(Key) ->
+%%   case ds_store:get_state(Key) of
+%%     [] -> ok ;
+%%     [S=#state] -> ds_sup:start_child(S)
+%%   end.

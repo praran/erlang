@@ -2,5 +2,7 @@
   [{vsn, "1.0.0"},
     {modules, [ds, ds_server, ds_sup, ds_behaviour,ds_fsm, ds_states_store]},
     {registered, []},
-    {mod, {ds, []}}
+    {mod, {ds, []}},
+    {env, [{nodes,[a@GBPTL7FBKPHV1, b@GBPTL7FBKPHV1, c@GBPTL7FBKPHV1]}
+          ]}
   ]}.

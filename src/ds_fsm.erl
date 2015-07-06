@@ -17,6 +17,8 @@
 %% Internal states
 -export([full/3, empty/3, available/3]).
 
+%%% :TODO Change the state according to gen server
+
 %% @doc start docking station.
 -spec start_link(DockRef :: term(), Total :: non_neg_integer(), Occupied :: non_neg_integer()) -> ok.
 start_link(DockRef, Total, Occupied) ->

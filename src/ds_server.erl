@@ -17,7 +17,7 @@
 %% @doc start docking station.
 -spec start_link(DockRef :: term(), Total :: non_neg_integer(), Occupied :: non_neg_integer()) -> ok.
 start_link(DockRef, Total, Occupied) ->
-  gen_server:start_link({global, DockRef}, ?MODULE, {DockRef,Total, Occupied}, []).
+  gen_server:start_link({global, DockRef}, ?MODULE, {DockRef, Total, Occupied}, []).
 
 %% @doc get cycle from specified docking station
 %% returns {ok, BikeReference} or {error, empty}.
@@ -49,9 +49,9 @@ get_info(DockRef) ->
 init({DockRef, Total, Occupied}) ->
   %% trapping exits to know when the parent shuts down
   process_flag(trap_exit, true),
-  case ds_states_store:get_global_dock_state(DockRef) of
+  case ds_store:get_state(DockRef) of
     []                 -> {ok, docking_station:start_link(Total, Occupied)};
-    [{DockRef, State}] -> {ok, State}
+    [State] -> {ok, State}
   end.
 
 
@@ -65,7 +65,7 @@ handle_call(Msg, _From, S) ->
         empty -> {reply, {error, empty}, S};
         {H, NewState} ->
           %% State change:: updating the state in global ets table to maintain state on failure
-          ds_states_store:store_global_dock_state(docking_station:get_dock_ref(NewState),NewState),
+          ds_store:add_state(NewState),
           {reply, {ok, H}, NewState}
       end;
     info ->
@@ -75,7 +75,7 @@ handle_call(Msg, _From, S) ->
         full -> {reply, {error, full}, S};
         NewState ->
           %% State change:: updating the state in global ets table to maintain state on failure
-          ds_states_store:store_global_dock_state(docking_station:get_dock_ref(NewState),NewState),
+          ds_store:add_state(NewState),
           {reply, {ok}, NewState}
       end
   end.
