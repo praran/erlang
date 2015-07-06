@@ -65,7 +65,7 @@ handle_call(Msg, _From, S) ->
         empty -> {reply, {error, empty}, S};
         {H, NewState} ->
           %% State change:: updating the state in global ets table to maintain state on failure
-          ds_states_store:store_global_dock_state(docking_station:get_name_of_pid(self()),NewState),
+          ds_states_store:store_global_dock_state(docking_station:get_dock_ref(NewState),NewState),
           {reply, {ok, H}, NewState}
       end;
     info ->
@@ -75,7 +75,7 @@ handle_call(Msg, _From, S) ->
         full -> {reply, {error, full}, S};
         NewState ->
           %% State change:: updating the state in global ets table to maintain state on failure
-          ds_states_store:store_global_dock_state(docking_station:get_name_of_pid(self()),NewState),
+          ds_states_store:store_global_dock_state(docking_station:get_dock_ref(NewState),NewState),
           {reply, {ok}, NewState}
       end
   end.

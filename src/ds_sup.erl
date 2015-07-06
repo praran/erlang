@@ -35,7 +35,7 @@ stop() ->
 -spec start_child(term(), non_neg_integer(), non_neg_integer()) -> {ok, pid()}.
 start_child(DockRef, Total, Occupied) ->
   %% intially store the state in the global states store with given DockRef
-  ds_states_store:store_global_dock_state(DockRef,docking_station:create_dock_state(Total, Occupied)),
+  ds_states_store:store_global_dock_state(DockRef,docking_station:create_dock_state(DockRef, Total, Occupied)),
   ChildSpec = {DockRef,
                {ds_server, start_link, [DockRef, Total, Occupied]},
                 permanent, infinity, worker, [ds_server]},
@@ -52,7 +52,7 @@ stop_child(DocRef) ->
 start_child(Total, Occupied) ->
   DockRef = list_to_atom(docking_station:get_random_string(20)),
   %% intially store the state in the global states store with given DockRef
-  ds_states_store:store_global_dock_state(DockRef,docking_station:create_dock_state(Total, Occupied)),
+  ds_states_store:store_global_dock_state(DockRef,docking_station:create_dock_state(DockRef,Total, Occupied)),
   ChildSpec = {DockRef,
               {ds_server, start_link, [DockRef, Total, Occupied]},
                permanent, infinity, worker, [ds_server]},
