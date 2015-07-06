@@ -49,7 +49,7 @@ get_info(DockRef) ->
 init({DockRef, Total, Occupied}) ->
   %% trapping exits to know when the parent shuts down
   process_flag(trap_exit, true),
-  case ds_store:get_state(DockRef) of
+  case ds_db:get_state(DockRef) of
     []                 -> {ok, docking_station:start_link(Total, Occupied)};
     [State] -> {ok, State}
   end.
@@ -65,7 +65,7 @@ handle_call(Msg, _From, S) ->
         empty -> {reply, {error, empty}, S};
         {H, NewState} ->
           %% State change:: updating the state in global ets table to maintain state on failure
-          ds_store:add_state(NewState),
+          ds_db:add_state(NewState),
           {reply, {ok, H}, NewState}
       end;
     info ->
@@ -75,7 +75,7 @@ handle_call(Msg, _From, S) ->
         full -> {reply, {error, full}, S};
         NewState ->
           %% State change:: updating the state in global ets table to maintain state on failure
-          ds_store:add_state(NewState),
+          ds_db:add_state(NewState),
           {reply, {ok}, NewState}
       end
   end.

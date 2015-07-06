@@ -3,6 +3,6 @@
     {modules, [ds, ds_server, ds_sup, ds_behaviour,ds_fsm, ds_states_store]},
     {registered, []},
     {mod, {ds, []}},
-    {env, [{nodes,[a@GBPTL7FBKPHV1, b@GBPTL7FBKPHV1, c@GBPTL7FBKPHV1]}
-          ]}
+    {env, [{nodes,[a@praran, b@praran, c@praran]}
+          ,{db_dir, "priv"}]}
   ]}.

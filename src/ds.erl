@@ -55,18 +55,13 @@ release_cycle(DockRef, BikeRef) ->
 get_info(DockRef) ->
   ds_server:get_info(DockRef).
 
+
+
+%% @doc helper function to start the docks from db
 start_docks_from_state() ->
  lists:foreach(fun(Key) ->
-                   case ds_store:get_state(Key) of
+                   case ds_db:get_state(Key) of
                      [] -> ok ;
                      [S=#state{}] -> ds_sup:start_child(S)
                    end
-               end, ds_store:all_keys()).
-
-
-
-%% start_dock(Key) ->
-%%   case ds_store:get_state(Key) of
-%%     [] -> ok ;
-%%     [S=#state] -> ds_sup:start_child(S)
-%%   end.
+               end, ds_db:all_keys()).

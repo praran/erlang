@@ -9,11 +9,11 @@
 -behaviour(supervisor).
 -include("dock.hrl").
 %% API
--export([start_link/0, stop/0, init/1, stop_child/1,start_child/1, start_child/2, start_child/3]).
+-export([start_link/0, stop/0, init/1, stop_child/1, start_child/1, start_child/2, start_child/3]).
 -define(MAX_RESTART, 3).
 -define(MAX_TIME, 3600).
 -define(SUPERVISOR, dssup).
--define(STATES_TABLE,dsstatestable).
+-define(STATES_TABLE, dsstatestable).
 
 
 %% @doc start the docking station supervisor
@@ -34,10 +34,10 @@ stop() ->
 -spec start_child(term(), non_neg_integer(), non_neg_integer()) -> {ok, pid()}.
 start_child(DockRef, Total, Occupied) ->
   %% intially store the state in the global states store with given DockRef
-  ds_store:add_state(docking_station:create_dock_state(DockRef, Total, Occupied)),
+  ds_db:add_state(docking_station:create_dock_state(DockRef, Total, Occupied)),
   ChildSpec = {DockRef,
-                 {ds_server, start_link, [DockRef, Total, Occupied]},
-                  permanent, infinity, worker, [ds_server]},
+    {ds_server, start_link, [DockRef, Total, Occupied]},
+    permanent, infinity, worker, [ds_server]},
   supervisor:start_child({global, ?SUPERVISOR}, ChildSpec).
 
 
@@ -46,21 +46,21 @@ start_child(DockRef, Total, Occupied) ->
 start_child(Total, Occupied) ->
   DockRef = list_to_atom(docking_station:get_random_string(20)),
   %% intially store the state in the global states store with given DockRef
-  ds_store:add_state(docking_station:create_dock_state(DockRef, Total, Occupied)),
+  ds_db:add_state(docking_station:create_dock_state(DockRef, Total, Occupied)),
   ChildSpec = {DockRef,
-              {ds_server, start_link, [ DockRef, Total, Occupied]},
-               permanent, infinity, worker, [ds_server]},
+    {ds_server, start_link, [DockRef, Total, Occupied]},
+    permanent, infinity, worker, [ds_server]},
   supervisor:start_child({global, ?SUPERVISOR}, ChildSpec),
   {ok, DockRef}.
 
 %% @doc start child with give refrence with total and occupied
 -spec start_child(term()) -> {ok, pid()}.
-start_child(S=#state{dockref = DockRef, total = Total, occupied = Occupied}) ->
+start_child(S = #state{dockref = DockRef, total = Total, occupied = Occupied}) ->
   %% intially store the state in the global states store with given DockRef
-  ds_store:add_state(S),
+  ds_db:add_state(S),
   ChildSpec = {DockRef,
-    {ds_server, start_link, [DockRef, Total, Occupied]},
-    permanent, infinity, worker, [ds_server]},
+                {ds_server, start_link, [DockRef, Total, Occupied]},
+                  permanent, infinity, worker, [ds_server]},
   supervisor:start_child({global, ?SUPERVISOR}, ChildSpec).
 
 %% @doc stop child with given reference

@@ -17,7 +17,6 @@
 %% Internal states
 -export([full/3, empty/3, available/3]).
 
-%%% :TODO Change the state according to gen server
 
 %% @doc start docking station.
 -spec start_link(DockRef :: term(), Total :: non_neg_integer(), Occupied :: non_neg_integer()) -> ok.
@@ -54,10 +53,10 @@ get_info(DockRef) ->
 init({DockRef,Total, Occupied}) ->
   %% trapping exits
   process_flag(trap_exit, true),
-  case ds_states_store:get_global_dock_state(DockRef) of
-    []                 -> NewState =  docking_station:create_dock_state(DockRef, Total, Occupied),
-                          {ok, docking_station:get_fsm_state(NewState), NewState};
-    [{DockRef, State}] -> {ok, docking_station:get_fsm_state(State), State}
+  case ds_db:get_state(DockRef)  of
+    []      ->    NewState =  docking_station:create_dock_state(DockRef, Total, Occupied),
+                  {ok, docking_station:get_fsm_state(NewState), NewState};
+    [State] ->    {ok, docking_station:get_fsm_state(State), State}
   end.
 
 
@@ -93,7 +92,7 @@ handle_event(_Msg, StateName, S) ->
 full(get_cycle, _From, S) ->
   {H, NewState}  = docking_station:get_cycle(S),
   %% State change:: updating the state in global ets table to maintain state on failure
-  ds_states_store:store_global_dock_state(docking_station:get_dock_ref(NewState), NewState),
+  ds_db:add_state(NewState),
   {reply, {ok, H}, available, NewState};
 full({release_cycle, _BikeRef}, _From, S) ->
   {reply, {error, full}, full, S}.
@@ -106,7 +105,7 @@ empty(get_cycle, _From, S) ->
 empty({release_cycle, BikeRef}, _From, S) ->
   NewState = docking_station:release_cycle(BikeRef, S),
   %% State change:: updating the state in global ets table to maintain state on failure
-  ds_states_store:store_global_dock_state(docking_station:get_dock_ref(NewState),NewState),
+  ds_db:add_state(NewState),
   {reply, {ok}, available, NewState}.
 
 %% @doc  when in available state get cycle should be able to return cycle
@@ -116,12 +115,12 @@ empty({release_cycle, BikeRef}, _From, S) ->
 available(get_cycle, _From, S) ->
   {H, NewState} = docking_station:get_cycle(S),
   %% State change:: updating the state in global ets table to maintain state on failure
-  ds_states_store:store_global_dock_state(docking_station:get_dock_ref(NewState),NewState),
+  ds_db:add_state(NewState),
   {reply, {ok, H}, docking_station:get_fsm_state(NewState), NewState};
 available({release_cycle, BikeRef}, _from, S) ->
   NewState = docking_station:release_cycle(BikeRef, S),
   %% State change:: updating the state in global ets table to maintain state on failure
-  ds_states_store:store_global_dock_state(docking_station:get_dock_ref(NewState),NewState),
+  ds_db:add_state(NewState),
   {reply, {ok}, docking_station:get_fsm_state(NewState), NewState}.
 
 
