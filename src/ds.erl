@@ -7,7 +7,6 @@
 %%%-------------------------------------------------------------------
 -module(ds).
 -behaviour(application).
--include("dock.hrl").
 
 %% API
 -export([start/2, stop/1, start_link/3, get_cycle/1, release_cycle/2, get_info/1]).
@@ -15,12 +14,14 @@
 %% to start of the application
 start(normal, _Args) ->
   Term = ds_sup:start_link(),
-  timer:sleep(1000),
+  %% give 5 secs for the supervisor to start before starting the childs
+  timer:sleep(5000),
   start_docks_from_state(),
   Term;
 start({takeover, _OtherNode}, []) ->
   Term = ds_sup:start_link(),
-  timer:sleep(1000),
+  %% give 5 secs for the supervisor to start before starting the childs
+  timer:sleep(5000),
   start_docks_from_state(),
   Term.
 
@@ -62,6 +63,6 @@ start_docks_from_state() ->
  lists:foreach(fun(Key) ->
                    case ds_db:get_state(Key) of
                      [] -> ok ;
-                     [S=#state{}] -> ds_sup:start_child(S)
+                     [S] -> ds_sup:start_child(S)
                    end
                end, ds_db:all_keys()).
