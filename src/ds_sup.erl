@@ -7,7 +7,6 @@
 %%%-------------------------------------------------------------------
 -module(ds_sup).
 -behaviour(supervisor).
--include("dock.hrl").
 %% API
 -export([start_link/0, stop/0, init/1, stop_child/1, start_child/1, start_child/2, start_child/3]).
 -define(MAX_RESTART, 3).
@@ -55,9 +54,10 @@ start_child(Total, Occupied) ->
 
 %% @doc start child with give refrence with total and occupied
 -spec start_child(term()) -> {ok, pid()}.
-start_child(S = #state{dockref = DockRef, total = Total, occupied = Occupied}) ->
+start_child(S) ->
   %% intially store the state in the global states store with given DockRef
   ds_db:add_state(S),
+  {DockRef, Total, Occupied} = docking_station:get_values_from_state(S),
   ChildSpec = {DockRef,
                 {ds_server, start_link, [DockRef, Total, Occupied]},
                   permanent, infinity, worker, [ds_server]},

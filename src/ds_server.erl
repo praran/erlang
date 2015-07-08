@@ -9,7 +9,7 @@
 %% Generic server behaviour
 -behaviour(gen_server).
 %% API / Client exports
--export([start_link/3, get_cycle/1, release_cycle/2, get_info/1]).
+-export([start_link/3, stop/1, get_cycle/1, release_cycle/2, get_info/1]).
 %% internal exports
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, code_change/3, terminate/2]).
 
@@ -30,6 +30,9 @@ get_cycle(DockRef) ->
 -spec release_cycle(DockRef :: term(), BikeRefs :: list()) -> ok | {error, full}.
 release_cycle(DockRef, BikeRef) ->
   gen_server:call({global, DockRef}, {release_cycle, BikeRef}).
+
+stop(DockRef) ->
+  gen_server:call({global, DockRef}, terminate).
 
 
 %% @doc get info of specific docing station
@@ -54,31 +57,31 @@ init({DockRef, Total, Occupied}) ->
     [State] -> {ok, State}
   end.
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Synchronous Calls
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-handle_call(Msg, _From, S) ->
-  case Msg of
-    get_cycle ->
-      case docking_station:get_cycle(S) of
-        empty -> {reply, {error, empty}, S};
-        {H, NewState} ->
-          %% State change:: updating the state in global ets table to maintain state on failure
-          ds_db:add_state(NewState),
-          {reply, {ok, H}, NewState}
-      end;
-    info ->
-      {reply, docking_station:get_info(S), S};
-    {release_cycle, BikeRef} ->
-      case docking_station:release_cycle(BikeRef, S) of
+
+handle_call({release_cycle, BikeRef}, _From, S) ->
+  case docking_station:release_cycle(BikeRef, S) of
         full -> {reply, {error, full}, S};
         NewState ->
           %% State change:: updating the state in global ets table to maintain state on failure
           ds_db:add_state(NewState),
           {reply, {ok}, NewState}
-      end
-  end.
+      end;
+handle_call(info, _From, S) ->
+          {reply, docking_station:get_info(S), S};
+handle_call(get_cycle, _From, S) ->
+     case docking_station:get_cycle(S) of
+        empty ->
+          {reply, {error, empty}, S};
+        {H, NewState} ->
+          %% State change:: updating the state in global ets table to maintain state on failure
+          ds_db:add_state(NewState),
+          {reply, {ok, H}, NewState}
+      end;
+handle_call(terminate, _From, S) ->
+          {stop, normal, ok,  S}.
 
 
 handle_info(Msg, S) ->
@@ -97,10 +100,21 @@ handle_cast(_Msg, S) ->
 % termination
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-terminate(normal, _State) ->
-  io:format("Terminating the docking station ~n"),
-  ok.
-
+terminate(normal, State) ->
+  DockRef = docking_station:get_dock_ref(State),
+  io:format("Terminating the docking station : ~p~n", [DockRef]),
+  ds_db:delete_state(docking_station:get_dock_ref(State)),
+  ok;
+terminate(shutdown, State) ->
+  DockRef = docking_station:get_dock_ref(State),
+  io:format("Terminating the docking station : ~p~n", [DockRef]),
+  ds_db:delete_state(docking_station:get_dock_ref(State)),
+  ok;
+ terminate(_MSg, State) ->
+   DockRef = docking_station:get_dock_ref(State),
+   io:format("Terminating the docking station : ~p~n", [DockRef]),
+   ds_db:delete_state(docking_station:get_dock_ref(State)),
+   ok.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Hot code deploy
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

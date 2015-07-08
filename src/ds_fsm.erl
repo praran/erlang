@@ -9,7 +9,7 @@
 -behaviour(gen_fsm).
 
 %% API / External exports
--export([start_link/3, get_cycle/1 , release_cycle/2, get_info/1]).
+-export([start_link/3, stop/1, get_cycle/1 , release_cycle/2, get_info/1]).
 
 %% Internal exports
 -export([init/1, handle_sync_event/4, handle_event/3, handle_info/3, terminate/3, code_change/4]).
@@ -44,6 +44,10 @@ release_cycle(DockRef, BikeRef) ->
 get_info(DockRef) ->
   gen_fsm:sync_send_all_state_event({global, DockRef}, info).
 
+
+stop(DockRef) ->
+   gen_fsm:send_all_state_event({global, DockRef}, terminate).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% generic fsm behaviour
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -77,8 +81,10 @@ handle_info(Info, StateName, S) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Globlal Asynchronous Calls
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc handle async events currently not supported
-handle_event(_Msg, StateName, S) ->
+%% @doc handle async events  supported only for terminate
+handle_event(terminate, _StateName, S) ->
+  {stop, normal, S};
+handle_event(_MSg, StateName, S) ->
   io:format("No Async calls supported !!!~n"),
   {next_state, StateName, S}.
 
@@ -128,7 +134,11 @@ available({release_cycle, BikeRef}, _from, S) ->
 % termination
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc terminate implemenation
-terminate(_Reason, _StateName, _State) ->
+terminate(normal, ready, State) ->
+  ds_db:delete_state(docking_station:get_dock_ref(State)),
+  io:format("Terminating the docking station ~n");
+terminate(_Reason, _StateName, State) ->
+  ds_db:delete_state(docking_station:get_dock_ref(State)),
   io:format("Terminating the FSM docking station ~n"),
   ok.
 

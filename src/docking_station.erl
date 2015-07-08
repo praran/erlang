@@ -9,7 +9,7 @@
 %% API
 -export([start_link/2, get_cycle/1, release_cycle/2, get_info/1]).
 %% Helper functions
--export([get_random_string/1, get_fsm_state/1, create_dock_state/3,get_dock_ref/1]).
+-export([get_random_string/1, get_fsm_state/1, create_dock_state/3,get_dock_ref/1,get_values_from_state/1]).
 
 -include("dock.hrl").
 
@@ -64,7 +64,7 @@ get_info(State) ->
 create_dock_state(DockRef, Total, Occupied) ->
   #state{dockref =  DockRef, total = Total, occupied = Occupied, free = (Total - Occupied), bikeRefs = get_bike_refs(Occupied)}.
 
-%% @doc gets the state based on  the state
+%% @doc gets the fsm state based on  the total and occupied
 get_fsm_state(_S =#state{total = Total, occupied = Occupied}) ->
   if Occupied =:= 0 ->
     empty;
@@ -79,18 +79,17 @@ get_fsm_state(_S =#state{total = Total, occupied = Occupied}) ->
 get_bike_refs(Num_of_bikes) -> [get_random_string(16) || _A <- lists:seq(1, Num_of_bikes)].
 
 %% @doc generate a random string of given length
-get_random_string(Length) ->
-  AllowedChars = "0123456789asdfghjklqwertyuiopzxcvbnm",
-  get_random_string(Length, AllowedChars).
+get_random_string(Len) ->
+  Chrs = list_to_tuple("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"),
+  ChrsSize = size(Chrs),
+  F = fun(_, R) -> [element(random:uniform(ChrsSize), Chrs) | R] end,
+  lists:foldl(F, "", lists:seq(1, Len)).
 
-%% @doc get random string of given length and allowd characters
-get_random_string(Length, AllowedChars) ->
-  lists:foldl(fun(_, Acc) ->
-    [lists:nth(random:uniform(length(AllowedChars)),
-      AllowedChars)]
-    ++ Acc
-  end, [], lists:seq(1, Length)).
-
-
+%% @doc extract dockref from State
 get_dock_ref(_S = #state{dockref =  DockRef}) ->
   DockRef.
+
+get_values_from_state(_S = #state{dockref =  DockRef, total = Total,  occupied = Occupied}) ->
+  {DockRef, Total, Occupied}.
+
+
