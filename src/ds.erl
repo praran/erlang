@@ -9,7 +9,7 @@
 -behaviour(application).
 
 %% API
--export([start/2, stop/1, start_link/3, get_cycle/1, release_cycle/2, get_info/1]).
+-export([start/2, stop/1, start_link/3, get_cycle/1, release_cycle/2, get_info/1,stop_dock/1]).
 
 %% to start of the application
 start(normal, _Args) ->
@@ -45,6 +45,9 @@ get_cycle(DockRef) ->
 -spec release_cycle(DockRef :: term(), BikeRefs :: list()) -> ok | {error, full}.
 release_cycle(DockRef, BikeRef) ->
   ds_server:release_cycle(DockRef, BikeRef).
+
+stop_dock(DockRef) ->
+  ds_sup:stop_child(DockRef).
 
 
 %% @doc get info of specific docing station

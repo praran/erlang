@@ -30,7 +30,7 @@
 
 some_test_() ->
    [
-      ?setup(fun is_registered/1),
+      ?setup(fun is_started/1),
        ?setup(fun test_release_cycle/1)].
 
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -38,46 +38,36 @@ some_test_() ->
 %%%%%%%%%%%%%%%%%%%%%%%
 
 start() ->
-  io:format("inside start: ~n"),
   create_db(),
-  io:format("created db: ~n"),
   DockRef = dock1,
-  {ok, Pid} = ds_server:start_link(DockRef, 5, 4),
+  {ok, Pid} = ds_server:start_link(DockRef, 5, 2),
   {Pid, DockRef}.
 
 stop({_, DockRef}) ->
   ds_server:stop(DockRef),
   destroy_db().
 
-dummy() -> ok.
-
-dummy(_) -> ok.
-
-
 %%%%%%%%%%%%%%%%%%%%
 %%% ACTUAL TESTS %%%
 %%%%%%%%%%%%%%%%%%%%
 create_db() ->
   timer:sleep(5000),
-  io:format("is registered test: ~n"),
   ds_db:create([node()]),
-  io:format("created db ~n"),
-  ds_db:start(),
-  io:format("started db ~n").
+  ds_db:start().
 
 
-is_registered({Pid, DockRef}) ->
+is_started({Pid, DockRef}) ->
   io:format("is registered test: ~n"),
   [?_assert(erlang:is_process_alive(Pid)),
     ?_assertEqual(Pid, global:whereis_name(DockRef))].
 
 test_release_cycle({_Pid, DockRef}) ->
   {ok, BikRef} = ds_server:get_cycle(DockRef),
-  io:format("Got bike ref : ~p~n",[BikRef]),
+  {ok, BikeRef2} = ds_server:get_cycle(DockRef),
   {error, Empty} = ds_server:get_cycle(DockRef),
-  io:format("got empy : ~p~n",[Empty]),
   [?_assert(BikRef =/= []),
-         ?_assert(Empty = empty)].
+    ?_assert(BikeRef2 =/= []),
+         ?_assert(Empty =:= empty)].
 
 destroy_db() ->
    ds_db:destroy([node()]).

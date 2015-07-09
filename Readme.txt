@@ -19,3 +19,6 @@ ds:start_link(dock1, 10,5).
 
 
 erl -mnesia dir '"/ldisc/scratch/Mnesia.Company"'
+
+
+ct_run -pa ebin/ -suite ds_server_test -logdir logs
