@@ -10,8 +10,10 @@
 
 -export([init_per_suite/1, end_per_suite/1,init_per_testcase/2, end_per_testcase/2, all/0]).
 -export([start_dock_tests/1,get_cycle_tests/1,release_cycle_tests/1,get_info_tests/1]).
+-export([get_cycle_when_empty_tests/1,release_cycle_when_full_tests/1]).
 
-all() -> [start_dock_tests, get_cycle_tests,release_cycle_tests,get_info_tests].
+all() -> [start_dock_tests, get_cycle_tests,release_cycle_tests,get_info_tests
+           ,get_cycle_when_empty_tests,release_cycle_when_full_tests].
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 % init per suite
@@ -29,6 +31,10 @@ end_per_suite(_Config) ->
 % init per testcase
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 init_per_testcase(release_cycle_tests, Config) ->
+  DockRef = dock1,
+  {ok, _Pid} = ds_fsm:start_link(DockRef, 5, 4),
+  [{dockref, DockRef}| Config];
+init_per_testcase(release_cycle_when_full_tests, Config) ->
   DockRef = dock1,
   {ok, _Pid} = ds_fsm:start_link(DockRef, 5, 4),
   [{dockref, DockRef}| Config];
@@ -59,10 +65,22 @@ start_dock_tests(Config) ->
 get_cycle_tests(Config) ->
   DockRef = ?config(dockref, Config),
   {ok,_BikeRef} = ds_fsm:get_cycle(DockRef),
+  ok.
+
+
+get_cycle_when_empty_tests(Config) ->
+  DockRef = ?config(dockref, Config),
+  {ok,_BikeRef} = ds_fsm:get_cycle(DockRef),
   {error, empty} = ds_fsm:get_cycle(DockRef),
   ok.
 
+
 release_cycle_tests(Config) ->
+  DockRef = ?config(dockref, Config),
+  {ok} = ds_fsm:release_cycle(DockRef, "asdfasdfs"),
+  ok.
+
+release_cycle_when_full_tests(Config) ->
   DockRef = ?config(dockref, Config),
   {ok} = ds_fsm:release_cycle(DockRef, "asdfasdfs"),
   {error, full} = ds_fsm:release_cycle(DockRef,"adadfadsf"),

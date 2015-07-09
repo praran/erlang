@@ -9,9 +9,9 @@
 -include_lib("common_test/include/ct.hrl").
 
 -export([init_per_suite/1, end_per_suite/1,init_per_testcase/2, end_per_testcase/2, all/0]).
--export([sup_started_test/1,sup_stop_test/1,child_restart_test/1,child_restart_times_test/1,child_restart_state_maintained/1]).
+-export([sup_started_test/1,sup_stop_test/1,child_restart_test/1,child_restart_times_test/1,child_restart_state_maintained_test/1]).
 
-all() -> [sup_started_test,sup_stop_test,child_restart_test,child_restart_times_test,child_restart_state_maintained].
+all() -> [sup_started_test,sup_stop_test,child_restart_test,child_restart_times_test,child_restart_state_maintained_test].
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 % init per suite
@@ -82,7 +82,7 @@ child_restart_times_test(Config) ->
   ok.
 
 
-child_restart_state_maintained(Config) ->
+child_restart_state_maintained_test(Config) ->
   DockRef = ?config(dockref, Config),
   %% get info
   {info
