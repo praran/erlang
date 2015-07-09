@@ -18,27 +18,27 @@
 %% @doc start docking station.
 -spec start_link(Total :: non_neg_integer(), Occupied :: non_neg_integer()) -> state.
 start_link(Total, Occupied) ->
-  #state{total = Total, occupied = Occupied, free = (Total - Occupied), bikeRefs = get_bike_refs(Occupied)}.
+  #dockstate{total = Total, occupied = Occupied, free = (Total - Occupied), bikeRefs = get_bike_refs(Occupied)}.
 
 %% @doc get cycle from specified docking station
 -spec get_cycle(State :: state) -> empty | {string(), state}.
-get_cycle(State = #state{occupied = Occupied, free = Free, bikeRefs = BikeRefs}) ->
+get_cycle(State = #dockstate{occupied = Occupied, free = Free, bikeRefs = BikeRefs}) ->
   if BikeRefs =:= [] ->
     empty;
     BikeRefs =/= [] ->
       [H | T] = BikeRefs,
-      NewState = State#state{occupied = Occupied - 1, free = Free + 1, bikeRefs = T},
+      NewState = State#dockstate{occupied = Occupied - 1, free = Free + 1, bikeRefs = T},
       {H, NewState}
   end.
 
 
 %% @doc release specific cycle to the specific docking station
 -spec release_cycle(BikeRef :: string(), State :: state) -> full | state.
-release_cycle(BikeRef, State = #state{occupied = Occupied, free = Free, bikeRefs = BikeRefs}) ->
+release_cycle(BikeRef, State = #dockstate{occupied = Occupied, free = Free, bikeRefs = BikeRefs}) ->
   if Free =< 0 ->
     full;
     Free > 0 ->
-      NewState = State#state{occupied = Occupied + 1, free = Free - 1, bikeRefs = [BikeRef | BikeRefs]},
+      NewState = State#dockstate{occupied = Occupied + 1, free = Free - 1, bikeRefs = [BikeRef | BikeRefs]},
       NewState
   end.
 
@@ -47,10 +47,10 @@ release_cycle(BikeRef, State = #state{occupied = Occupied, free = Free, bikeRefs
 -spec get_info(State :: state) -> {info, state}.
 get_info(State) ->
   {info
-    , {{total, State#state.total}
-    , {occupied, State#state.occupied}
-    , {free, State#state.free}
-    , {bikeRef, State#state.bikeRefs}}
+    , {{total, State#dockstate.total}
+    , {occupied, State#dockstate.occupied}
+    , {free, State#dockstate.free}
+    , {bikeRef, State#dockstate.bikeRefs}}
   }.
 
 
@@ -62,10 +62,10 @@ get_info(State) ->
 %% @doc helper to create state from Total and Occupied.
 -spec create_dock_state(DockRef :: term(), Total :: non_neg_integer(), Occupied :: non_neg_integer()) -> state.
 create_dock_state(DockRef, Total, Occupied) ->
-  #state{dockref =  DockRef, total = Total, occupied = Occupied, free = (Total - Occupied), bikeRefs = get_bike_refs(Occupied)}.
+  #dockstate{dockref =  DockRef, total = Total, occupied = Occupied, free = (Total - Occupied), bikeRefs = get_bike_refs(Occupied)}.
 
 %% @doc gets the fsm state based on  the total and occupied
-get_fsm_state(_S =#state{total = Total, occupied = Occupied}) ->
+get_fsm_state(_S =#dockstate{total = Total, occupied = Occupied}) ->
   if Occupied =:= 0 ->
     empty;
     Total =:= Occupied ->
@@ -86,10 +86,10 @@ get_random_string(Len) ->
   lists:foldl(F, "", lists:seq(1, Len)).
 
 %% @doc extract dockref from State
-get_dock_ref(_S = #state{dockref =  DockRef}) ->
+get_dock_ref(_S = #dockstate{dockref =  DockRef}) ->
   DockRef.
 
-get_values_from_state(_S = #state{dockref =  DockRef, total = Total,  occupied = Occupied}) ->
+get_values_from_state(_S = #dockstate{dockref =  DockRef, total = Total,  occupied = Occupied}) ->
   {DockRef, Total, Occupied}.
 
 
