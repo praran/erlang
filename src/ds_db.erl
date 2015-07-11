@@ -42,8 +42,7 @@ destroy(DiscNodesList) ->
 
 %% @doc start the database
 start() ->
-  application:start(mnesia),
-  is_ready().
+  application:start(mnesia).
 
 
 %% @doc stop the database
