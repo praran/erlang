@@ -15,7 +15,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%  DB to store data of dock stations
 %%  Using Mnesia database as it supports replication across
-%%  multiple nodes
+%%  multiple nodes and transaction support
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% @doc create the database for multiple nodes

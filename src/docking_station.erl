@@ -20,6 +20,7 @@
 start_link(Total, Occupied) ->
   #dockstate{total = Total, occupied = Occupied, free = (Total - Occupied), bikeRefs = get_bike_refs(Occupied)}.
 
+
 %% @doc get cycle from specified docking station
 -spec get_cycle(State :: state) -> empty | {string(), state}.
 get_cycle(State = #dockstate{occupied = Occupied, free = Free, bikeRefs = BikeRefs}) ->
@@ -65,6 +66,7 @@ create_dock_state(DockRef, Total, Occupied) ->
   #dockstate{dockref =  DockRef, total = Total, occupied = Occupied, free = (Total - Occupied), bikeRefs = get_bike_refs(Occupied)}.
 
 %% @doc gets the fsm state based on  the total and occupied
+-spec get_fsm_state(state: term()) -> term().
 get_fsm_state(_S =#dockstate{total = Total, occupied = Occupied}) ->
   if Occupied =:= 0 ->
     empty;
@@ -76,9 +78,11 @@ get_fsm_state(_S =#dockstate{total = Total, occupied = Occupied}) ->
 
 
 %% @doc gets the references for the bikes
+-spec get_bike_refs(non_neg_integer()) -> [term()].
 get_bike_refs(Num_of_bikes) -> [get_random_string(16) || _A <- lists:seq(1, Num_of_bikes)].
 
 %% @doc generate a random string of given length
+-spec get_random_string(non_neg_integer()) -> string().
 get_random_string(Len) ->
   Chrs = list_to_tuple("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"),
   ChrsSize = size(Chrs),
@@ -86,9 +90,12 @@ get_random_string(Len) ->
   lists:foldl(F, "", lists:seq(1, Len)).
 
 %% @doc extract dockref from State
+-spec get_dock_ref(dockstate: term()) -> string().
 get_dock_ref(_S = #dockstate{dockref =  DockRef}) ->
   DockRef.
 
+%% @doc extracts the dockref, total , occupied from the dockstate
+-spec get_values_from_state(docksate:term()) -> {string(), non_neg_integer(), non_neg_integer()}.
 get_values_from_state(_S = #dockstate{dockref =  DockRef, total = Total,  occupied = Occupied}) ->
   {DockRef, Total, Occupied}.
 

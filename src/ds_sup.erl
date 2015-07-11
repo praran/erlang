@@ -34,10 +34,7 @@ stop() ->
 start_child(DockRef, Total, Occupied) ->
   %% intially store the state in the global states store with given DockRef
   ds_db:add_state(docking_station:create_dock_state(DockRef, Total, Occupied)),
-  ChildSpec = {DockRef,
-    {ds_server, start_link, [DockRef, Total, Occupied]},
-    permanent, infinity, worker, [ds_server]},
-  supervisor:start_child({global, ?SUPERVISOR}, ChildSpec).
+  supervisor:start_child({global, ?SUPERVISOR}, get_child_specs(DockRef, Total, Occupied)).
 
 
 %% @doc start child with given total and occupied and return a reference
@@ -46,10 +43,7 @@ start_child(Total, Occupied) ->
   DockRef = list_to_atom(docking_station:get_random_string(20)),
   %% intially store the state in the global states store with given DockRef
   ds_db:add_state(docking_station:create_dock_state(DockRef, Total, Occupied)),
-  ChildSpec = {DockRef,
-    {ds_server, start_link, [DockRef, Total, Occupied]},
-    permanent, infinity, worker, [ds_server]},
-  supervisor:start_child({global, ?SUPERVISOR}, ChildSpec),
+  supervisor:start_child({global, ?SUPERVISOR}, get_child_specs(DockRef, Total, Occupied)),
   {ok, DockRef}.
 
 %% @doc start child with give refrence with total and occupied
@@ -58,10 +52,7 @@ start_child(S) ->
   %% intially store the state in the global states store with given DockRef
   ds_db:add_state(S),
   {DockRef, Total, Occupied} = docking_station:get_values_from_state(S),
-  ChildSpec = {DockRef,
-                {ds_server, start_link, [DockRef, Total, Occupied]},
-                  permanent, infinity, worker, [ds_server]},
-  supervisor:start_child({global, ?SUPERVISOR}, ChildSpec).
+  supervisor:start_child({global, ?SUPERVISOR}, get_child_specs(DockRef, Total, Occupied)).
 
 %% @doc stop child with given reference
 -spec stop_child(term()) -> ok.
@@ -77,3 +68,12 @@ stop_child(DocRef) ->
 init([]) ->
   {ok, {{one_for_one, ?MAX_RESTART, ?MAX_TIME}, []}}.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% helper functions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% @doc get child process specs
+get_child_specs(DockRef, Total, Occupied) ->
+  {DockRef,
+    {ds_server, start_link, [DockRef, Total, Occupied]},
+    permanent, infinity, worker, [ds_server]}.

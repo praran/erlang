@@ -103,6 +103,7 @@ full(get_cycle, _From, S) ->
 full({release_cycle, _BikeRef}, _From, S) ->
   {reply, {error, full}, full, S}.
 
+
 %% @doc  when in empty state get cycle should return error
 %%       when release cycle should be able to accept release
 %%       and switch state to available
@@ -113,6 +114,7 @@ empty({release_cycle, BikeRef}, _From, S) ->
   %% State change:: updating the state in global ets table to maintain state on failure
   ds_db:add_state(NewState),
   {reply, {ok}, available, NewState}.
+
 
 %% @doc  when in available state get cycle should be able to return cycle
 %%       and if it becomes empty should switch state to empty else stay in available

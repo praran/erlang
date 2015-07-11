@@ -12,6 +12,7 @@
 -export([start/2, stop/1, start_link/3, get_cycle/1, release_cycle/2, get_info/1,stop_dock/1]).
 
 %% to start of the application
+-spec start(term(), list()) -> term().
 start(normal, _Args) ->
   Term = ds_sup:start_link(),
   %% give 5 secs for the supervisor to start before starting the childs
@@ -46,10 +47,6 @@ get_cycle(DockRef) ->
 release_cycle(DockRef, BikeRef) ->
   ds_server:release_cycle(DockRef, BikeRef).
 
-stop_dock(DockRef) ->
-  ds_sup:stop_child(DockRef).
-
-
 %% @doc get info of specific docing station
 %% get_info(DockRef::term()) -> {ok, [{total, Total::non_neg_integer()},
 %% {occupied, Occupied::non_neg_integer()},
@@ -59,7 +56,15 @@ stop_dock(DockRef) ->
 get_info(DockRef) ->
   ds_server:get_info(DockRef).
 
+%% @doc stop the docking station
+stop_dock(DockRef) ->
+  ds_sup:stop_child(DockRef).
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Helper functions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% @doc helper function to start the docks from db
 start_docks_from_state() ->
